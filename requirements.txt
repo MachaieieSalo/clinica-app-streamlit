@@ -1,5 +1,8 @@
 streamlit
-supabase
+supabase-py
 bcrypt
+pandas
+fpdf
 python-dotenv
-
+plotly
+reportlab
