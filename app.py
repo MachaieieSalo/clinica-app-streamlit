@@ -657,12 +657,12 @@ def pagina_consultar_historico():
             logging.error(f"Erro inesperado ao consultar histórico: {e}")
 
 def pagina_farmacia():
-    st.title("Loja Online - Carrinho de Compras")
+    st.title("Farmácia")
     st.subheader("Informações do Cliente")
-    nome_cliente = st.text_input("Nome do Cliente:")
-    nuit_cliente = st.text_input("NUIT do Cliente:")
+    nome_cliente = st.text_input("Nome do Paciente :")
+    nuit_cliente = st.text_input("NUIT do Paciente :")
 
-    st.subheader("Selecione o Produto")
+    st.subheader("Selecione o Farmaco")
 
     # Carrega produtos uma vez e armazena na sessão
     if 'produtos_carregados' not in st.session_state:
