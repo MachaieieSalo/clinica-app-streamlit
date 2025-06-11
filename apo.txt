@@ -1,0 +1,143 @@
+escrever um script .bat ou .sh para facilitar a execução no futuro.
+
+
+para executar localmente
+cd D:\Users\MACHAIEIE\Desktop\cli\clinica_app
+streamlit run app.py
+cd D:\Users\MACHAIEIE\Desktop\cli\clinica_app\venv\Scripts\activate
+
+### ⚠️ Nota de segurança
+
+Esta política permite que qualquer pessoa (mesmo sem login) faça upload, download e listagem de ficheiros no bucket. Ideal para testes, mas em produção convém ajustar para maior segurança.
+
+⚡ Se quiseres, posso te ajudar a criar regras mais restritivas para produção. Diz só! 🚀
+
+escreva política que só permita atualizar o campo foto se o id do utilizador corresponder ao id na tabela pacientes
+
+ escrever uma versão mais segura da política supabase que só permita updates ao utilizador que criou o registo
+
+
+✅ Ler todos os pacientes na tabela pacientes
+✅ Converter o campo foto (caso esteja armazenado como lista, tipo ["url"]) para apenas uma string (ex.: "url")
+✅ Atualizar cada paciente no Supabase
+✅ Incluir logs detalhados para acompanhamento
+✅ Tratar erros de forma controlada
+
+Logo abaixo, incluo instruções para executar no teu Supabase.
+
+
+- Ativa o RLS na tabela
+ALTER TABLE pacientes ENABLE ROW LEVEL SECURITY;
+
+-- Apaga políticas antigas, se existirem
+DROP POLICY IF EXISTS "Permitir update de todas as linhas" ON pacientes;
+
+-- Cria a política de UPDATE para todos os utilizadores, permitindo update na coluna foto
+CREATE POLICY "Permitir update de todas as linhas"
+ON pacientes
+FOR UPDATE
+TO public
+USING (true)
+WITH CHECK (true);
+
+-- (Opcional) Cria a política de SELECT para evitar bloqueios ao ler
+DROP POLICY IF EXISTS "Permitir select de todas as linhas" ON pacientes;
+CREATE POLICY "Permitir select de todas as linhas"
+ON pacientes
+FOR SELECT
+TO public
+USING (true);
+
+-- (Opcional) Cria política de INSERT, se necessário
+DROP POLICY IF EXISTS "Permitir insert de todas as linhas" ON pacientes;
+CREATE POLICY "Permitir insert de todas as linhas"
+ON pacientes
+FOR INSERT
+TO public
+WITH CHECK (true);
+
+ALTER TABLE pacientes ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: todos podem ver pacientes
+CREATE POLICY "Permitir leitura dos pacientes"
+  ON pacientes
+  FOR SELECT
+  USING (true);
+
+-- INSERT: todos podem adicionar pacientes
+CREATE POLICY "Permitir adicionar pacientes"
+  ON pacientes
+  FOR INSERT
+  WITH CHECK (true);
+
+-- UPDATE: todos podem atualizar pacientes
+CREATE POLICY "Permitir atualizar pacientes"
+  ON pacientes
+  FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
+
+-- DELETE: (opcional) todos podem excluir pacientes
+CREATE POLICY "Permitir remover pacientes"
+  ON pacientes
+  FOR DELETE
+  USING (true);
+                          
+
+CREATE TABLE carrinho (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  nome TEXT,
+  preco FLOAT,
+  quantidade INTEGER,
+  imagem TEXT
+);
+                                                                                  
+
+gerar o .py finalizado, limpo, comentado e pronto para usar!
+Inserir recomendações de boas práticas de segurança e deploy.
+
+Gerar o .py final completo organizado em 1 só ficheiro
+
+Separar em módulos e gerar os ficheiros (auth.py, utils.py, etc.)  
+
+Ajuste a tabela carrinho para ligar ao auth.uid() do Supabase.   
+
+# auth.py
+from supabase import create_client
+import logging
+
+SUPABASE_URL = 'https://vlzpsyxwekggophcjbpu.supabase.co'
+SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZsenBzeXh3ZWtnZ29waGNqYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg1NTQyNzUsImV4cCI6MjA2NDEzMDI3NX0.wEZrIVdlH-lA2YfqJp-Z8CANn6Uhx7Ec9QvRt08rRFQ'
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def register_user(name, email, password):
+    try:
+        response = supabase.auth.sign_up({"email": email, "password": password})
+        if response.get('error'):
+            logging.error(f"Erro ao registar: {response['error']['message']}")
+            return None, 0
+        # Salva nome no perfil de utilizador (opcional)
+        user_id = response['user']['id']
+        supabase.from_('profiles').insert({"id": user_id, "name": name}).execute()
+        return response, 1
+    except Exception as e:
+        logging.error(f"Erro ao registar: {e}")
+        return None, 0
+
+def login_user(email, password):
+    try:
+        response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        if response.get('error'):
+            logging.warning("Login falhou")
+            return None
+        return response['user']
+    except Exception as e:
+        logging.error(f"Erro ao fazer login: {e}")
+        return None                                                           
+
+elif opcao == "📝 Registro de Utilizador":
+    registar_utilizador()
+
+elif opcao == "🔐 Login":
+    autenticar_utilizador()
+
