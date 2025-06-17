@@ -34,8 +34,16 @@ logging.basicConfig(
 
 # 📌 Função para autenticar e registrar (mantida, mas com ajustes internos)
 def autenticar_utilizador():
-    st.header("🔐 Login e Registro")
+    st.image("logo.png", width=150)
+    st.header("🔐 Registro e Login")
     tab1, tab2 = st.tabs(["📝 Registrar", "🔑 Login"])
+
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
     with tab1:
         email_reg = st.text_input("Email:", key="email_registro_tab") # Alterado key para evitar conflito
@@ -382,8 +390,16 @@ def upload_foto(foto_file):
 # ---------------------- Funções de Página ----------------------
 
 def pagina_inicio():
-    st.subheader("Bem-vindo ao Sistema Integrado de Gestão de Pacientes.")
+    st.image("logo.png", width=150)
+    st.subheader(f"Bem-vindo, {st.session_state['user'].email} ao Sistema Integrado de Gestão de Pacientes.!")
     st.write("Use o menu à esquerda para gerir pacientes, agendar consultas e gerar relatórios.")
+
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def pagina_adicionar_paciente():
     st.subheader("Adicionar Novo Paciente")
@@ -657,12 +673,12 @@ def pagina_consultar_historico():
             logging.error(f"Erro inesperado ao consultar histórico: {e}")
 
 def pagina_farmacia():
-    st.title("Farmácia")
+    st.title("Loja Online - Carrinho de Compras")
     st.subheader("Informações do Cliente")
-    nome_cliente = st.text_input("Nome do Paciente :")
-    nuit_cliente = st.text_input("NUIT do Paciente :")
+    nome_cliente = st.text_input("Nome do Cliente:")
+    nuit_cliente = st.text_input("NUIT do Cliente:")
 
-    st.subheader("Selecione o Farmaco")
+    st.subheader("Selecione o Produto")
 
     # Carrega produtos uma vez e armazena na sessão
     if 'produtos_carregados' not in st.session_state:
@@ -986,7 +1002,6 @@ if st.session_state["user"] is None:
 else:
     # Se o utilizador está logado, mostra o menu lateral e as páginas
     st.sidebar.image("logo.png", width=150)
-    st.sidebar.title(f"Bem-vindo, {st.session_state['user'].email}!") # Assumindo que você tem um logo.png
     st.sidebar.write("### Menu")
 
     menu_options = {
