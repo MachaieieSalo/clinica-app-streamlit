@@ -942,7 +942,7 @@ def pagina_graficos_visuais():
     if df_vendas is not None and not df_vendas.empty:
         df_vendas["data_emissao"] = pd.to_datetime(df_vendas["data_emissao"], format='ISO8601').dt.date
 
-        st.write("### Total de Vendas por Dia")
+        st.write("### Relatório Contabilístico da Farmácia")
         vendas_dia = df_vendas.groupby("data_emissao")["total"].sum().reset_index()
         fig_bar = px.bar(vendas_dia, x="data_emissao", y="total", text_auto=True,
                           labels={"data_emissao": "Data", "total": "Total (MZN)"},
