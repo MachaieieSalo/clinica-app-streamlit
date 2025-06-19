@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import io # Importar io para manipulação de arquivos em memória
 
 import streamlit as st
@@ -94,6 +94,20 @@ def registar_utilizador():
     # a funcionalidade de registro está em 'autenticar_utilizador'.
     pass
 
+def carregar_dados_produtos():
+    """Carrega todos os dados da tabela 'produtos' do Supabase."""
+    try:
+        response = supabase.table("produtos").select("id, custo, nome, preco").execute()
+        if response.data:
+            return pd.DataFrame(response.data)
+        else:
+            # --- CORREÇÃO AQUI: Sempre retorna um DataFrame vazio se não houver dados ---
+            return pd.DataFrame(columns=['id', 'custo', 'nome', 'preco'])
+    except Exception as e:
+        logging.error(f"Erro ao carregar dados de produtos: {e}")
+        st.error(f"Erro ao carregar dados de produtos. Detalhes: {e}")
+        # --- CORREÇÃO AQUI: Sempre retorna um DataFrame vazio em caso de erro também ---
+        return pd.DataFrame(columns=['id', 'custo', 'nome', 'preco'])
 # 🔹 Carregar produtos
 @st.cache_data
 def carregar_produtos():
@@ -122,6 +136,23 @@ def carregar_exames():
         logging.error(f"Erro ao carregar exames: {e}")
         st.error("Erro ao carregar exames. Tente novamente.")
         return []
+
+@st.cache_data(ttl=3600)
+def carregar_dados_contabilidade_vendas():
+    try:
+        response = supabase.table("contabilidade").select("*").order("data_emissao", desc=False).execute()
+        if response.data:
+            df = pd.DataFrame(response.data)
+            df['data_emissao'] = pd.to_datetime(df['data_emissao'], format='ISO8601')
+            df['data_dia'] = df['data_emissao'].dt.date
+            df['detalhes_itens'] = df['detalhes_itens'].apply(lambda x: x if isinstance(x, list) else [])
+            return df
+        else:
+            return pd.DataFrame()
+    except Exception as e:
+        logging.error(f"Erro ao carregar dados de contabilidade: {e}")
+        st.error(f"Erro ao carregar dados de contabilidade. Detalhes: {e}")
+        return pd.DataFrame()
 
 # 🔹 Obter e incrementar recibo
 def obter_incrementar_recibo():
@@ -934,55 +965,230 @@ def pagina_cotacoes():
         else:
             st.error("Erro ao gerar PDF da cotação.")
 
+def calcular_custo_produtos_vendidos(vendas_df, produtos_df):
+    if vendas_df.empty or produtos_df.empty:
+        return 0
+    total_cpv = 0
+    custo_por_id = produtos_df.set_index('id')['custo'].to_dict()
+    for _, venda in vendas_df.iterrows():
+        itens = venda['detalhes_itens']
+        for item in itens:
+            produto_id = item.get('id')
+            quantidade = item.get('quantidade', 0)
+            custo_unitario = custo_por_id.get(produto_id, item.get('custo', 0))
+            if custo_unitario == 0 and 'custo' not in produtos_df.columns:
+                logging.warning(f"Custo para o produto ID {produto_id} não encontrado na tabela 'produtos' ou 'detalhes_itens'. Considerado 0 para CPV.")
+            total_cpv += custo_unitario * quantidade
+    return total_cpv
+
+def analisar_rentabilidade(vendas, custos_produtos_vendidos, despesas_fixas, despesas_variaveis, impostos):
+    margem_contribuicao_total = vendas - custos_produtos_vendidos - despesas_variaveis
+    margem_contribuicao_percentual = (margem_contribuicao_total / vendas) if vendas > 0 else 0
+    lucro_operacional = margem_contribuicao_total - despesas_fixas
+    resultado_liquido_final = lucro_operacional - impostos
+    ponto_equilibrio_mzn = despesas_fixas / margem_contribuicao_percentual if margem_contribuicao_percentual > 0 else float('inf')
+    return {
+        "margem_contribuicao_total": margem_contribuicao_total,
+        "margem_contribuicao_percentual": margem_contribuicao_percentual,
+        "lucro_operacional": lucro_operacional,
+        "resultado_liquido_final": resultado_liquido_final,
+        "ponto_equilibrio_mzn": ponto_equilibrio_mzn
+    }
+
+
+
 def pagina_graficos_visuais():
-    st.subheader("📊 Relatórios Visuais e Gráficos")
-    df_vendas = carregar_vendas()
+    st.subheader("📊 Relatórios Contabilísticos e Gráficos Visuais")
+    st.markdown("""
+    Este relatório apresenta uma **visão consolidada das operações financeiras** da farmácia, combinando um balancete simplificado com gráficos e visualizações interativas abrangentes.
+    """)
+
+    # 1. Seleção de Período para o Relatório Completo
+    st.header("1. Seleção de Período")
+    col1, col2 = st.columns(2)
+    with col1:
+        data_inicio = st.date_input("Data de Início", datetime.now().date().replace(day=1) - timedelta(days=90), key="rel_data_inicio")
+    with col2:
+        data_fim = st.date_input("Data de Fim", datetime.now().date(), key="rel_data_fim")
+
+    # Carregar todos os dados de vendas e produtos
+    df_vendas_raw = carregar_dados_contabilidade_vendas()
+    df_produtos = carregar_dados_produtos()
+
+    if df_vendas_raw.empty:
+        st.info("Não há dados de vendas disponíveis no Supabase para gerar o relatório.")
+        return
+
+    # Filtrar vendas pelo período selecionado para todo o relatório
+    df_vendas_filtrado = df_vendas_raw[
+        (df_vendas_raw['data_dia'] >= data_inicio) &
+        (df_vendas_raw['data_dia'] <= data_fim)
+    ].copy()
+
+    if df_vendas_filtrado.empty:
+        st.info(f"Não há vendas registradas entre {data_inicio.strftime('%d/%m/%Y')} e {data_fim.strftime('%d/%m/%Y')} para este relatório.")
+        return
+
+    # --- Cálculos Financeiros para o Balancete e Resumo ---
+    total_vendas = df_vendas_filtrado['total'].sum()
+    custos_produtos_vendidos_reais = calcular_custo_produtos_vendidos(df_vendas_filtrado, df_produtos)
+
+    st.markdown("---")
+    st.header("2. Configuração de Despesas (Manual)")
+    #st.info("Em um sistema real, estas despesas seriam puxadas de tabelas específicas (ex: despesas_fixas, despesas_variaveis, impostos_pagos).")
+    despesas_fixas_input = st.number_input("Despesas Fixas Totais (MZN)", value=25000.0, min_value=0.0, key="despesas_fixas")
+    despesas_variaveis_input = st.number_input("Outras Despesas Variáveis (MZN)", value=48000.0, min_value=0.0, key="despesas_variaveis")
+    impostos_input = st.number_input("Impostos Pagos (MZN)", value=9200.0, min_value=0.0, key="impostos_pagos")
+
+    analise = analisar_rentabilidade(
+        vendas=total_vendas,
+        custos_produtos_vendidos=custos_produtos_vendidos_reais,
+        despesas_fixas=despesas_fixas_input,
+        despesas_variaveis=despesas_variaveis_input,
+        impostos=impostos_input
+    )
+
+    st.markdown("---")
+    st.header("3. Balancete Simplificado")
+    balancete_df = pd.DataFrame({
+        "Categoria": [
+            "Vendas Brutas",
+            "Custo dos Produtos Vendidos (CPV)",
+            "Outras Despesas Variáveis",
+            "Margem de Contribuição",
+            "Despesas Fixas",
+            "Lucro Operacional",
+            "Impostos Pagos",
+            "Resultado Líquido Final"
+        ],
+        "Valor (MZN)": [
+            total_vendas,
+            custos_produtos_vendidos_reais,
+            despesas_variaveis_input,
+            analise["margem_contribuicao_total"],
+            despesas_fixas_input,
+            analise["lucro_operacional"],
+            impostos_input,
+            analise["resultado_liquido_final"]
+        ]
+    })
+    st.dataframe(balancete_df.set_index("Categoria"), use_container_width=True)
+
+    st.markdown("---")
+    st.header("4. Resumo Financeiro e Análise de Rentabilidade")
+    col_metric1, col_metric2, col_metric3 = st.columns(3)
+    col_metric1.metric("📈 **Vendas Totais (MZN)**", f"{total_vendas:,.2f} MZN")
+    col_metric2.metric("💲 **Margem de Contribuição (MZN)**", f"{analise['margem_contribuicao_total']:,.2f} MZN")
+    col_metric3.metric("💰 **Lucro Operacional (MZN)**", f"{analise['lucro_operacional']:,.2f} MZN")
     
-    # Protege contra df_vendas ser None
-    if df_vendas is not None and not df_vendas.empty:
-        df_vendas["data_emissao"] = pd.to_datetime(df_vendas["data_emissao"], format='ISO8601').dt.date
+    col_metric4, col_metric5 = st.columns(2)
+    col_metric4.metric("💵 **Resultado Líquido Final (MZN)**", f"{analise['resultado_liquido_final']:,.2f} MZN")
+    col_metric5.metric("🎯 **Ponto de Equilíbrio (MZN)**", f"{analise['ponto_equilibrio_mzn']:,.2f} MZN")
 
-        st.write("### Relatório Contabilístico da Farmácia")
-        vendas_dia = df_vendas.groupby("data_emissao")["total"].sum().reset_index()
-        fig_bar = px.bar(vendas_dia, x="data_emissao", y="total", text_auto=True,
-                          labels={"data_emissao": "Data", "total": "Total (MZN)"},
-                          title="Total de Vendas por Dia")
-        st.plotly_chart(fig_bar, use_container_width=True)
+    st.markdown(f"""
+    - **Margem de Contribuição Percentual**: **{analise['margem_contribuicao_percentual']:.2%}**
+    """)
 
-        st.write("### Distribuição de Vendas por Cliente")
-        vendas_cliente = df_vendas.groupby("nome_cliente")["total"].sum().reset_index()
-        fig_pizza = px.pie(vendas_cliente, values="total", names="nome_cliente",
-                           title="Vendas por Cliente")
-        st.plotly_chart(fig_pizza, use_container_width=True)
-
-        st.write("### Ranking de Clientes")
-        vendas_cliente_rank = vendas_cliente.sort_values(by="total", ascending=False).head(10)
-        fig_bar_rank = px.bar(vendas_cliente_rank, x="nome_cliente", y="total", text_auto=True,
-                                labels={"nome_cliente": "Cliente", "total": "Total (MZN)"},
-                                title="Top 10 Clientes por Vendas")
-        st.plotly_chart(fig_bar_rank, use_container_width=True)
-        
-        # Gráfico de vendas por produto (requer desaninhamento dos detalhes_itens)
-        st.write("### Vendas por Produto")
-        todos_itens = []
-        for index, row in df_vendas.iterrows():
-            if 'detalhes_itens' in row and row['detalhes_itens']:
-                for item in row['detalhes_itens']:
-                    item['venda_id'] = row['id'] # Para manter o contexto da venda
-                    todos_itens.append(item)
-        
-        if todos_itens:
-            df_itens = pd.DataFrame(todos_itens)
-            vendas_produto = df_itens.groupby("nome")["quantidade"].sum().reset_index()
-            fig_bar_prod = px.bar(vendas_produto, x="nome", y="quantidade", text_auto=True,
-                                labels={"nome": "Produto", "quantidade": "Quantidade Vendida"},
-                                title="Quantidade de Produtos Vendidos")
-            st.plotly_chart(fig_bar_prod, use_container_width=True)
+    # Exemplo de comparação com período anterior (simulado - ajuste para dados reais se houver)
+    vendas_periodo_anterior_simulado = 110000
+    if vendas_periodo_anterior_simulado > 0:
+        comparacao_percentual_simulado = ((total_vendas - vendas_periodo_anterior_simulado) / vendas_periodo_anterior_simulado) * 100
+        if comparacao_percentual_simulado >= 0:
+            st.success(f"**Crescimento de Vendas em relação ao período anterior (Simulado)**: **+{comparacao_percentual_simulado:.2f}%**")
         else:
-            st.info("Nenhum dado de itens de venda para exibir gráficos de produtos.")
+            st.error(f"**Redução de Vendas em relação ao período anterior (Simulado)**: **{comparacao_percentual_simulado:.2f}%**")
+
+    st.header("5. Visualizações de Dados")
+
+    # Gráfico de Vendas ao Longo do Tempo
+    st.write("### 📈 Tendência de Vendas Diárias")
+    vendas_por_dia = df_vendas_filtrado.groupby('data_dia')['total'].sum().reset_index()
+    vendas_por_dia.columns = ['Data', 'Vendas (MZN)']
+    fig_line = px.line(vendas_por_dia, x='Data', y='Vendas (MZN)', 
+                       title='Vendas Totais por Dia no Período')
+    fig_line.update_layout(xaxis_title="Data", yaxis_title="Vendas (MZN)")
+    st.plotly_chart(fig_line, use_container_width=True)
+
+    # Gráfico de Distribuição de Vendas por Cliente
+    st.write("### 👥 Distribuição Percentual de Vendas por Cliente")
+    vendas_cliente = df_vendas_filtrado.groupby("nome_cliente")["total"].sum().reset_index()
+    if not vendas_cliente.empty:
+        fig_pizza = px.pie(vendas_cliente, values="total", names="nome_cliente",
+                           title="Vendas por Cliente",
+                           hole=0.3)
+        fig_pizza.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig_pizza, use_container_width=True)
+    else:
+        st.info("Nenhum dado de vendas por cliente para exibir.")
+
+    # Gráfico de Ranking de Clientes
+    st.write("### 🏅 Top 10 Clientes por Vendas")
+    vendas_cliente_rank = vendas_cliente.sort_values(by="total", ascending=False).head(10)
+    if not vendas_cliente_rank.empty:
+        fig_bar_rank = px.bar(vendas_cliente_rank, x="nome_cliente", y="total", text_auto=True,
+                              labels={"nome_cliente": "Cliente", "total": "Total (MZN)"},
+                              title="Top 10 Clientes por Vendas")
+        fig_bar_rank.update_layout(xaxis_title="Cliente", yaxis_title="Total de Vendas (MZN)")
+        st.plotly_chart(fig_bar_rank, use_container_width=True)
+    else:
+        st.info("Nenhum dado de ranking de clientes para exibir.")
+
+    # Gráficos de Vendas por Produto (Quantidade e Valor)
+    st.write("### 💊 Análise de Vendas por Produto")
+    todos_itens = []
+    for index, row in df_vendas_filtrado.iterrows():
+        if 'detalhes_itens' in row and isinstance(row['detalhes_itens'], list) and row['detalhes_itens']:
+            for item in row['detalhes_itens']:
+                todos_itens.append({
+                    'nome': item.get('nome'),
+                    'quantidade': item.get('quantidade', 0),
+                    'preco_unitario': item.get('preco', 0)
+                })
+            
+    if todos_itens:
+        df_itens = pd.DataFrame(todos_itens)
+        
+        # Gráfico de Quantidade Vendida por Produto
+        st.write("#### Quantidade Total de Produtos Vendidos")
+        vendas_produto_quantidade = df_itens.groupby("nome")["quantidade"].sum().reset_index()
+        fig_bar_prod_qty = px.bar(vendas_produto_quantidade, x="nome", y="quantidade", text_auto=True,
+                                labels={"nome": "Produto", "quantidade": "Quantidade Vendida"},
+                                title="Quantidade Total de Produtos Vendidos")
+        fig_bar_prod_qty.update_layout(xaxis_title="Produto", yaxis_title="Quantidade Vendida")
+        st.plotly_chart(fig_bar_prod_qty, use_container_width=True)
+
+        # Gráfico de Valor Total de Vendas por Produto
+        st.write("#### Valor Total de Vendas por Produto")
+        df_itens['valor_total_item'] = df_itens['quantidade'] * df_itens['preco_unitario']
+        vendas_produto_valor = df_itens.groupby("nome")["valor_total_item"].sum().reset_index()
+        fig_bar_prod_val = px.bar(vendas_produto_valor, x="nome", y="valor_total_item", text_auto=True,
+                                 labels={"nome": "Produto", "valor_total_item": "Valor Total (MZN)"},
+                                 title="Valor Total de Vendas por Produto")
+        fig_bar_prod_val.update_layout(xaxis_title="Produto", yaxis_title="Valor Total (MZN)")
+        st.plotly_chart(fig_bar_prod_val, use_container_width=True)
 
     else:
-        st.info("Não há dados de vendas disponíveis para gerar gráficos.")
+        st.info("Nenhum dado detalhado de itens de venda para exibir gráficos de produtos.")
+
+    st.header("6. Conclusão e Recomendações")
+
+    if analise['resultado_liquido_final'] > 0:
+        st.success(f"""
+        A farmácia registrou um **resultado líquido positivo de {analise['resultado_liquido_final']:,.2f} MZN** neste período, indicando lucratividade.
+        O volume de vendas de {total_vendas:,.2f} MZN superou o ponto de equilíbrio de {analise['ponto_equilibrio_mzn']:,.2f} MZN, o que é um indicador forte de saúde financeira.
+        """)
+    else:
+        st.error(f"""
+        A farmácia registrou um **resultado líquido negativo de {analise['resultado_liquido_final']:,.2f} MZN**, indicando um prejuízo neste período.
+        As vendas de {total_vendas:,.2f} MZN ficaram **abaixo do ponto de equilíbrio** de {analise['ponto_equilibrio_mzn']:,.2f} MZN, o que significa que as receitas não foram suficientes para cobrir todos os custos e despesas.
+        """)
+
+    st.markdown("""
+    **Recomendações:**
+    - **Análise Detalhada de Custos:** Revisar os custos dos produtos vendidos e as despesas variáveis para identificar áreas de otimização.
+    - **Estratégias de Vendas e Marketing:** Implementar ou intensificar campanhas para aumentar o volume de vendas e a receita total, visando consistentemente operar acima do ponto de equilíbrio.
+    - **Gestão de Stock:** Monitorar o giro de stock e evitar excessos ou faltas, o que pode impactar o capital de giro e as vendas.
+    """)
 
 # ---------------------- Lógica Principal da Aplicação ----------------------
 
