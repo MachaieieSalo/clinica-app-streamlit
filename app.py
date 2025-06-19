@@ -493,6 +493,12 @@ def pagina_adicionar_paciente():
         # incluindo aqueles que antes resultariam em "has no attribute 'status_code'"
         st.error(f"Erro inesperado ao salvar paciente: {e}")
         logging.error(f"Erro inesperado ao salvar paciente: {e}")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def pagina_listar_pacientes():
     st.image("logo.png", width=150)
@@ -531,6 +537,12 @@ def pagina_listar_pacientes():
     except Exception as e:
         st.error(f"Erro ao carregar ou listar pacientes: {e}")
         logging.error(f"Erro ao carregar ou listar pacientes: {e}")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def pagina_relatorios_lote():
     st.subheader("Gerar Relatórios de Todos os Pacientes")
@@ -566,6 +578,12 @@ def pagina_relatorios_lote():
     except Exception as e:
         st.error(f"Erro ao gerar relatórios em lote: {e}")
         logging.error(f"Erro ao gerar relatórios em lote: {e}")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def pagina_agendamento_consultas():
     st.image("logo.png", width=150)
@@ -598,6 +616,7 @@ def pagina_agendamento_consultas():
                 st.error(f"Erro inesperado ao agendar consulta: {e}")
                 logging.error(f"Erro inesperado ao agendar consulta: {e}")
 
+
     st.header("📋 Consultas Agendadas")
     try:
         consultas_data = supabase.table("consultas").select("*").execute()
@@ -619,6 +638,12 @@ def pagina_agendamento_consultas():
     except Exception as e:
         st.error(f"Erro ao carregar consultas agendadas: {e}")
         logging.error(f"Erro ao carregar consultas agendadas: {e}")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 
 def pagina_triagem():
@@ -667,6 +692,12 @@ def pagina_triagem():
             except Exception as e:
                 st.error(f"❌ Erro inesperado ao inserir: {e}")
                 logging.error(f"Erro inesperado ao inserir (triagem): {e}")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def pagina_consultar_historico():
     st.image("logo.png", width=150)
@@ -707,6 +738,12 @@ def pagina_consultar_historico():
         except Exception as e:
             st.error(f"❌ Erro inesperado ao consultar histórico: {e}")
             logging.error(f"Erro inesperado ao consultar histórico: {e}")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def pagina_farmacia():
     st.image("logo.png", width=150)
@@ -835,6 +872,12 @@ def pagina_farmacia():
                 logging.error(f"Erro inesperado ao salvar dados da venda: {e}")
         else:
             st.error("Não foi possível gerar a fatura PDF.")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def pagina_cotacoes():
     st.image("logo.png", width=150)
@@ -971,6 +1014,12 @@ def pagina_cotacoes():
                 logging.error(f"Erro ao salvar cotação ou PDF: {e}")
         else:
             st.error("Erro ao gerar PDF da cotação.")
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
+    """)
 
 def calcular_custo_produtos_vendidos(vendas_df, produtos_df):
     if vendas_df.empty or produtos_df.empty:
@@ -1001,7 +1050,6 @@ def analisar_rentabilidade(vendas, custos_produtos_vendidos, despesas_fixas, des
         "resultado_liquido_final": resultado_liquido_final,
         "ponto_equilibrio_mzn": ponto_equilibrio_mzn
     }
-
 
 
 def pagina_graficos_visuais():
@@ -1196,6 +1244,13 @@ def pagina_graficos_visuais():
     - **Análise Detalhada de Custos:** Revisar os custos dos produtos vendidos e as despesas variáveis para identificar áreas de otimização.
     - **Estratégias de Vendas e Marketing:** Implementar ou intensificar campanhas para aumentar o volume de vendas e a receita total, visando consistentemente operar acima do ponto de equilíbrio.
     - **Gestão de Stock:** Monitorar o giro de stock e evitar excessos ou faltas, o que pode impactar o capital de giro e as vendas.
+    """)
+
+    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+    st.markdown("""
+    © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
+    Versão: 1.0  
+    Desenvolvedor: Salomão Paulino Machaieie
     """)
 
 # ---------------------- Lógica Principal da Aplicação ----------------------
