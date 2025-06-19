@@ -1056,7 +1056,7 @@ def pagina_graficos_visuais():
     st.image("logo.png", width=150)
     st.subheader("📊 Relatórios Contabilísticos e Gráficos Visuais")
     st.markdown("""
-    Este relatório apresenta uma **visão consolidada das operações financeiras** da farmácia, combinando um balancete simplificado com gráficos e visualizações interativas abrangentes.
+    Este relatório apresenta uma visão consolidada das operações financeiras da farmácia, combinando um balancete simplificado com gráficos e visualizações interativas abrangentes.
     """)
 
     # 1. Seleção de Período para o Relatório Completo
@@ -1090,8 +1090,8 @@ def pagina_graficos_visuais():
     custos_produtos_vendidos_reais = calcular_custo_produtos_vendidos(df_vendas_filtrado, df_produtos)
 
     st.markdown("---")
-    st.header("2. Configuração de Despesas (Manual)")
-    #st.info("Em um sistema real, estas despesas seriam puxadas de tabelas específicas (ex: despesas_fixas, despesas_variaveis, impostos_pagos).")
+    st.header("2. Configuração de Despesas")
+    #st.info(" podes importar ajs tabelas dentro do Supabase sendo as tabelas específicas (despesas_fixas, despesas_variaveis, impostos_pagos).")
     despesas_fixas_input = st.number_input("Despesas Fixas Totais (MZN)", value=25000.0, min_value=0.0, key="despesas_fixas")
     despesas_variaveis_input = st.number_input("Outras Despesas Variáveis (MZN)", value=48000.0, min_value=0.0, key="despesas_variaveis")
     impostos_input = st.number_input("Impostos Pagos (MZN)", value=9200.0, min_value=0.0, key="impostos_pagos")
@@ -1150,9 +1150,9 @@ def pagina_graficos_visuais():
     if vendas_periodo_anterior_simulado > 0:
         comparacao_percentual_simulado = ((total_vendas - vendas_periodo_anterior_simulado) / vendas_periodo_anterior_simulado) * 100
         if comparacao_percentual_simulado >= 0:
-            st.success(f"**Crescimento de Vendas em relação ao período anterior (Simulado)**: **+{comparacao_percentual_simulado:.2f}%**")
+            st.success(f"**Crescimento de Vendas em relação ao período anterior**: **+{comparacao_percentual_simulado:.2f}%**")
         else:
-            st.error(f"**Redução de Vendas em relação ao período anterior (Simulado)**: **{comparacao_percentual_simulado:.2f}%**")
+            st.error(f"**Redução de Vendas em relação ao período anterior**: **{comparacao_percentual_simulado:.2f}%**")
 
     st.header("5. Visualizações de Dados")
 
