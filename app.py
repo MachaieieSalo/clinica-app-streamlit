@@ -433,6 +433,7 @@ def pagina_inicio():
     """)
 
 def pagina_adicionar_paciente():
+    st.image("logo.png", width=150)
     st.subheader("Adicionar Novo Paciente")
     nome = st.text_input("Nome Completo")
     idade = st.number_input("Idade", 0, 120, step=1)
@@ -494,6 +495,7 @@ def pagina_adicionar_paciente():
         logging.error(f"Erro inesperado ao salvar paciente: {e}")
 
 def pagina_listar_pacientes():
+    st.image("logo.png", width=150)
     st.subheader("Lista de Pacientes")
     try:
         pacientes_data = supabase.table('pacientes').select("*").execute()
@@ -566,6 +568,7 @@ def pagina_relatorios_lote():
         logging.error(f"Erro ao gerar relatórios em lote: {e}")
 
 def pagina_agendamento_consultas():
+    st.image("logo.png", width=150)
     st.subheader("📅 Agendamento de Consultas")
     st.header("Agendar Nova Consulta")
     with st.form("formulario_consulta"):
@@ -619,6 +622,7 @@ def pagina_agendamento_consultas():
 
 
 def pagina_triagem():
+    st.image("logo.png", width=150)
     st.header("📝 Registrar Entrada de Paciente")
     nome = st.text_input("Nome do paciente:", key="triagem_nome").strip()
     observacoes = st.text_area(
@@ -665,6 +669,7 @@ def pagina_triagem():
                 logging.error(f"Erro inesperado ao inserir (triagem): {e}")
 
 def pagina_consultar_historico():
+    st.image("logo.png", width=150)
     st.header("🔍 Consultar Histórico de Paciente")
 
     nome_pesquisa = st.text_input("Nome do paciente:", key="consulta_nome").strip()
@@ -704,6 +709,7 @@ def pagina_consultar_historico():
             logging.error(f"Erro inesperado ao consultar histórico: {e}")
 
 def pagina_farmacia():
+    st.image("logo.png", width=150)
     st.title("Farmácia")
     st.subheader("Informações do Paciênte")
     nome_cliente = st.text_input("Nome do Paciênte:")
@@ -831,6 +837,7 @@ def pagina_farmacia():
             st.error("Não foi possível gerar a fatura PDF.")
 
 def pagina_cotacoes():
+    st.image("logo.png", width=150)
     st.title("📋 Cotações de Exames Clínicos") # Título atualizado
     st.subheader("Informações da Empresa Requisitante") # Subtítulo mais claro
     
@@ -998,6 +1005,7 @@ def analisar_rentabilidade(vendas, custos_produtos_vendidos, despesas_fixas, des
 
 
 def pagina_graficos_visuais():
+    st.image("logo.png", width=150)
     st.subheader("📊 Relatórios Contabilísticos e Gráficos Visuais")
     st.markdown("""
     Este relatório apresenta uma **visão consolidada das operações financeiras** da farmácia, combinando um balancete simplificado com gráficos e visualizações interativas abrangentes.
