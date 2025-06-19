@@ -704,12 +704,12 @@ def pagina_consultar_historico():
             logging.error(f"Erro inesperado ao consultar histórico: {e}")
 
 def pagina_farmacia():
-    st.title("Loja Online - Carrinho de Compras")
-    st.subheader("Informações do Cliente")
-    nome_cliente = st.text_input("Nome do Cliente:")
-    nuit_cliente = st.text_input("NUIT do Cliente:")
+    st.title("Farmácia")
+    st.subheader("Informações do Paciênte")
+    nome_cliente = st.text_input("Nome do Paciênte:")
+    nuit_cliente = st.text_input("NUIT do Paciênte:")
 
-    st.subheader("Selecione o Produto")
+    st.subheader("Selecione o Fármaco")
 
     # Carrega produtos uma vez e armazena na sessão
     if 'produtos_carregados' not in st.session_state:
@@ -722,11 +722,11 @@ def pagina_farmacia():
 
     if produtos_disponiveis:
         produto_nomes = [p["nome"] for p in produtos_disponiveis]
-        produto_selecionado_nome = st.selectbox("Produto:", produto_nomes)
+        produto_selecionado_nome = st.selectbox("Fármaco:", produto_nomes)
         produto_selecionado = next((p for p in produtos_disponiveis if p["nome"] == produto_selecionado_nome), None)
         quantidade = st.number_input("Quantidade:", min_value=1, step=1, value=1)
     else:
-        st.warning("Nenhum produto disponível no momento.")
+        st.warning("Nenhum Fármaco disponível no momento.")
     
     if "carrinho" not in st.session_state:
         st.session_state.carrinho = []
@@ -742,7 +742,7 @@ def pagina_farmacia():
             st.session_state.carrinho.append(item_carrinho)
             st.success(f"{quantidade} x {produto_selecionado['nome']} adicionado ao carrinho!")
         else:
-            st.warning("Nenhum produto selecionado ou disponível para adicionar.")
+            st.warning("Nenhum Farmaco selecionado ou disponível para adicionar.")
 
     st.subheader("Carrinho:")
     total = 0
