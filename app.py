@@ -402,6 +402,9 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
     elementos.append(Paragraph(f"Total Geral: MZN {total_com_iva:.2f}", estilo_bold))
     elementos.append(Spacer(1, 12))
 
+    elementos.append(Paragraph("Consulta Médica inclui: Anamnese, Exame Físico, Tensão Arterial, Temperatura, Peso, Altura e Índice de Massa Corporal.)", estilo_normal))
+    elementos.append(Spacer(1, 12))
+
     elementos.append(Paragraph("Esta cotação tem a validade de 05 dias.", estilo_normal))
     elementos.append(Spacer(1, 12))
 
