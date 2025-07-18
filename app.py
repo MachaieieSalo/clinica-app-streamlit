@@ -356,7 +356,9 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
     )
 
     # Dados da empresa
-    elementos.append(Paragraph(f"NUIT: {empresa['nuit']} - Endereço: {empresa['endereco']}", estilo_normal))
+    elementos.append(Paragraph(f"<b>Cotação para:</b> {empresa['nome']}", estilo_bold))
+    elementos.append(Paragraph(f"NUIT: {empresa['nuit']}", estilo_normal))
+    elementos.append(Paragraph(f"Endereço: {empresa['endereco']}", estilo_normal))
     elementos.append(Paragraph(f"Email: {empresa['email']}", estilo_normal))
     elementos.append(Spacer(1, 12))
 
@@ -402,8 +404,8 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
 
     # Dados bancários
     elementos.append(Paragraph("<b>DADOS BANCÁRIOS</b>", estilo_bold))
-    elementos.append(Paragraph("MPESA - Conta: 8481766589 - Pedro Mate", estilo_normal))
-    elementos.append(Paragraph("EMOLA - Conta: 878166583 - Pedro Mate", estilo_normal))
+    elementos.append(Paragraph("MPESA - Conta: 84 671 1512 - Rogério Elabo Saide", estilo_normal))
+    elementos.append(Paragraph("EMOLA - Conta: 87 191 1717  - Yaquini alojamento De Sousa", estilo_normal))
 
     # Gerar PDF
     try:
