@@ -362,7 +362,7 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
     elementos.append(Paragraph("Contacto: +258  84 671 1512 / 87 791 1717",  estilo_normal))
     elementos.append(Spacer(1, 12))
     
-    elementos.append(Paragraph(f"<b>Cotação de Exames Clínicos para:</b> {empresa['nome']}", estilo_bold))
+    elementos.append(Paragraph(f"<b>Cotação de Exames Clínicos para</b> {empresa['nome']}", estilo_bold))
     elementos.append(Paragraph(f"NUIT: {empresa['nuit']}", estilo_normal))
     elementos.append(Paragraph(f"Endereço: {empresa['endereco']}", estilo_normal))
     elementos.append(Paragraph(f"Email: {empresa['email']}", estilo_normal))
