@@ -928,11 +928,11 @@ def pagina_cotacoes():
     st.title("📋 Cotações de Exames Clínicos")
     st.subheader("Informações da Empresa Requisitante")
 
-    # Inputs da empresa com .strip() para evitar espaços vazios
-    nome_empresa = st.text_input("Nome da Empresa:").strip()
-    nuit_empresa = st.text_input("NUIT da Empresa:").strip()
-    endereco_empresa = st.text_input("Endereço da Empresa:").strip()
-    email_empresa = st.text_input("Email da Empresa:").strip()
+    # Inputs com st.session_state para manter os valores após o clique
+    nome_empresa = st.text_input("Nome da Empresa:", key="nome_empresa").strip()
+    nuit_empresa = st.text_input("NUIT da Empresa:", key="nuit_empresa").strip()
+    endereco_empresa = st.text_input("Endereço da Empresa:", key="endereco_empresa").strip()
+    email_empresa = st.text_input("Email da Empresa:", key="email_empresa").strip()
 
     st.subheader("Itens da Cotação (Exames)")
 
@@ -984,14 +984,20 @@ def pagina_cotacoes():
 
         if st.button("Limpar Itens da Cotação"):
             st.session_state.itens_cotacao = []
-            st.rerun()
     else:
         st.info("Nenhum item adicionado à cotação ainda.")
 
     # Botão para gerar PDF e salvar cotação
     if st.button("Gerar PDF e Salvar Cotação"):
+
         # Validação robusta dos campos da empresa
-        campos_obrigatorios = [nome_empresa, nuit_empresa, endereco_empresa, email_empresa]
+        campos_obrigatorios = [
+            st.session_state.nome_empresa.strip(),
+            st.session_state.nuit_empresa.strip(),
+            st.session_state.endereco_empresa.strip(),
+            st.session_state.email_empresa.strip()
+        ]
+
         if any(campo == "" for campo in campos_obrigatorios):
             st.warning("Preencha todas as informações da empresa.")
             return
@@ -1010,17 +1016,17 @@ def pagina_cotacoes():
             return
 
         empresa_dados = {
-            "nome": nome_empresa,
-            "nuit": nuit_empresa,
-            "endereco": endereco_empresa,
-            "email": email_empresa
+            "nome": st.session_state.nome_empresa.strip(),
+            "nuit": st.session_state.nuit_empresa.strip(),
+            "endereco": st.session_state.endereco_empresa.strip(),
+            "email": st.session_state.email_empresa.strip()
         }
 
         # Gerar PDF
         pdf_cotacao_bytes = gerar_pdf_cotacao_fpdf(empresa_dados, st.session_state.itens_cotacao)
 
         if pdf_cotacao_bytes:
-            nome_arquivo_cotacao_pdf = f"cotacao_{nome_empresa.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+            nome_arquivo_cotacao_pdf = f"cotacao_{st.session_state.nome_empresa.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
 
             try:
                 # Salvar o PDF no Supabase Storage
@@ -1034,10 +1040,10 @@ def pagina_cotacoes():
                 # Salvar os detalhes da cotação na tabela 'cotacoes'
                 cotacao_data_db = {
                     "data_cotacao": datetime.now().isoformat(),
-                    "nome_empresa": nome_empresa,
-                    "nuit_empresa": nuit_empresa,
-                    "endereco_empresa": endereco_empresa,
-                    "email_empresa": email_empresa,
+                    "nome_empresa": st.session_state.nome_empresa.strip(),
+                    "nuit_empresa": st.session_state.nuit_empresa.strip(),
+                    "endereco_empresa": st.session_state.endereco_empresa.strip(),
+                    "email_empresa": st.session_state.email_empresa.strip(),
                     "itens_cotacao": st.session_state.itens_cotacao,
                     "total_cotacao": total_cotacao,
                     "pdf_url": public_url_pdf if public_url_pdf else None,
@@ -1049,18 +1055,18 @@ def pagina_cotacoes():
                 st.success("PDF da cotação gerado e salvo no Supabase Storage e detalhes salvos na base de dados!")
 
                 # Botão de download direto
-                st.success("Clique abaixo para fazer o download do PDF da cotação.")
-
-                st.download_button(
+                if st.download_button(
                     label="⬇️ Baixar Cotação PDF",
-                    ydata=pdf_cotacao_bytes,
+                    data=pdf_cotacao_bytes,
                     file_name=nome_arquivo_cotacao_pdf,
                     mime="application/pdf"
-                )
-
-            # NÃO limpar os itens nem fazer rerun agora
-            # Apenas se o utilizador quiser, ou após o download, noutro ciclo
-
+                ):
+                    # Limpar dados apenas após o download
+                    st.session_state.itens_cotacao = []
+                    st.session_state.nome_empresa = ""
+                    st.session_state.nuit_empresa = ""
+                    st.session_state.endereco_empresa = ""
+                    st.session_state.email_empresa = ""
 
             except Exception as e:
                 st.error(f"Erro ao salvar cotação ou PDF: {e}")
@@ -1074,6 +1080,7 @@ def pagina_cotacoes():
     Versão: 1.0  
     Desenvolvedor: Salomão Paulino Machaieie
     """)
+
 
 
 def calcular_custo_produtos_vendidos(vendas_df, produtos_df):
