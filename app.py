@@ -356,7 +356,7 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
     )
 
     # Dados da empresa
-    elementos.append(Paragraph("Boane, B.2, Q.3 Av. Namaacha, Nº 59",  estilo_normal))
+    elementos.append(Paragraph("Boane, B.2, Q.3 Av. Namaacha, Rua 1º de Maio C. Nº 59",  estilo_normal))
     elementos.append(Paragraph("NUIT: 401937684",  estilo_normal))
     elementos.append(Paragraph("Contacto: +258  84 671 1512 / 87 791 1717",  estilo_normal))
     elementos.append(Spacer(1, 12))
