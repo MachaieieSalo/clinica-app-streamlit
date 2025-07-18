@@ -354,10 +354,14 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
         name="BoldPersonalizado", parent=estilos["Normal"],
         fontName="Courier-Bold", fontSize=10, leading=12
     )
-
+    # header
+    elements.append(Paragraph("Boane, B.2, Q.3 Av. Namaacha, Rua 1º de Maio C. Nº 59", estilo_personalizado))
+    elements.append(Paragraph("NUIT: 401937684", estilo_personalizado))
+    elements.append(Paragraph("Contacto: +258  84 671 1512 / 87 791 1717", estilo_personalizado))
+    elements.append(Spacer(1, 12))
     # Dados da empresa
     elementos.append(Spacer(1, 12))
-    elementos.append(Paragraph(f"<b>Cotação para:</b> {empresa['nome']}", estilo_bold))
+    elementos.append(Paragraph(f"<b>Cotação de Exames clinicos:</b> {empresa['nome']}", estilo_bold))
     elementos.append(Paragraph(f"NUIT: {empresa['nuit']} - Endereço: {empresa['endereco']}", estilo_normal))
     elementos.append(Paragraph(f"Email: {empresa['email']}", estilo_normal))
     elementos.append(Spacer(1, 12))
@@ -384,7 +388,7 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
 
     tabela_itens = Table(data, colWidths=[30, 150, 50, 80, 80, 40])
     tabela_itens.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.white),
         ("GRID", (0, 0), (-1, -1), 1, colors.black),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("FONTNAME", (0, 0), (-1, -1), "Courier"),
