@@ -368,7 +368,7 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
     elementos.append(Spacer(1, 12))
 
     # Tabela dos itens
-    data = [["Nr", "Descrição", "Qtd", "Preço Unitário", "Preço Total", "IVA"]]
+    data = [["Nr", "Descrição", "Qtd", "Preço Unit", "Preço Total", "IVA"]]
 
     total_sem_iva = 0
     for idx, item in enumerate(itens, 1):
@@ -389,7 +389,7 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
 
     tabela_itens = Table(data, colWidths=[30, 150, 50, 80, 80, 40])
     tabela_itens.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.white),
         ("GRID", (0, 0), (-1, -1), 1, colors.black),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("FONTNAME", (0, 0), (-1, -1), "Courier"),
