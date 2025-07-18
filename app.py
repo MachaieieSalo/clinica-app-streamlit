@@ -356,11 +356,10 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
     )
 
     # Dados da empresa
-    elementos.append(Spacer(1, 12))
     elements.append(Paragraph("Boane, B.2, Q.3 Av. Namaacha, Rua 1 de Maio C. Numero: 59", estilo_personalizado))
     elements.append(Paragraph("NUIT: 401937684", estilo_personalizado))
     elements.append(Paragraph("Contacto: +258  84 671 1512 / 87 791 1717", estilo_personalizado))
-    elementos.append(Paragraph(f"<b>Cotação de Exames clinicos:</b> {empresa['nome']}", estilo_bold))
+    elementos.append(Paragraph(f"<b>Cotação para:</b> {empresa['nome']}", estilo_bold))
     elementos.append(Paragraph(f"NUIT: {empresa['nuit']} - Endereço: {empresa['endereco']}", estilo_normal))
     elementos.append(Paragraph(f"Email: {empresa['email']}", estilo_normal))
     elementos.append(Spacer(1, 12))
