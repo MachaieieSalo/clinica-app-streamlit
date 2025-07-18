@@ -312,8 +312,8 @@ def carregar_vendas():
         return pd.DataFrame()
 
 # Função gerar_pdf_cotacao (usando FPDF) - Esta foi a que você preferiu manter e ajustei o nome
-def gerar_pdf_cotacao_fpdf(empresa, itens): # Renomeei para evitar conflito com a de cima
-"""
+def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com a de cima
+    """
     Gera um PDF de cotação em memória e retorna os bytes.
     """
     buffer = io.BytesIO()
