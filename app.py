@@ -925,55 +925,55 @@ def pagina_farmacia():
 
 def pagina_cotacoes():
     st.image("logo.png", width=150)
-    st.title("📋 Cotações de Exames Clínicos") # Título atualizado
-    st.subheader("Informações da Empresa Requisitante") # Subtítulo mais claro
-    
-    nome_empresa = st.text_input("Nome da Empresa:")
-    nuit_empresa = st.text_input("NUIT da Empresa:")
-    endereco_empresa = st.text_input("Endereço da Empresa:")
-    email_empresa = st.text_input("Email da Empresa:")
+    st.title("📋 Cotações de Exames Clínicos")
+    st.subheader("Informações da Empresa Requisitante")
 
-    st.subheader("Itens da Cotação (Exames)") # Subtítulo atualizado
+    # Inputs da empresa com .strip() para evitar espaços vazios
+    nome_empresa = st.text_input("Nome da Empresa:").strip()
+    nuit_empresa = st.text_input("NUIT da Empresa:").strip()
+    endereco_empresa = st.text_input("Endereço da Empresa:").strip()
+    email_empresa = st.text_input("Email da Empresa:").strip()
 
-    # Inicializa st.session_state.itens_cotacao se não existir
+    st.subheader("Itens da Cotação (Exames)")
+
+    # Inicializa a lista de itens da cotação na sessão
     if 'itens_cotacao' not in st.session_state:
         st.session_state.itens_cotacao = []
-    
-    # Carrega exames disponíveis e armazena na sessão
+
+    # Carrega exames disponíveis uma vez
     if 'exames_carregados' not in st.session_state:
         st.session_state.exames_carregados = carregar_exames()
-    
-    exames_disponiveis = st.session_state.exames_carregados
 
+    exames_disponiveis = st.session_state.exames_carregados
     exames_nomes = [e["nome"] for e in exames_disponiveis] if exames_disponiveis else []
-    
+
+    # Formulário para adicionar itens
     with st.form("add_item_cotacao_form", clear_on_submit=True):
         col1, col2 = st.columns([0.7, 0.3])
-        exame_selecionado_nome = col1.selectbox("Exame:", exames_nomes, key="exame_cotacao_sel") # Nome da variável e key atualizados
+        exame_selecionado_nome = col1.selectbox("Exame:", exames_nomes, key="exame_cotacao_sel")
         quantidade_cotacao = col2.number_input("Quantidade:", min_value=1, step=1, value=1, key="qtd_cotacao_input")
-        add_item_button = st.form_submit_button("Adicionar Exame à Cotação") # Texto do botão atualizado
+        add_item_button = st.form_submit_button("Adicionar Exame à Cotação")
 
     if add_item_button:
         if exame_selecionado_nome:
             exame_selecionado = next((e for e in exames_disponiveis if e["nome"] == exame_selecionado_nome), None)
             if exame_selecionado:
-                # Quantidade de exames é geralmente 1, mas mantive o campo para flexibilidade.
-                # Se for sempre 1, pode remover 'quantidade' e usar 'preco' diretamente.
                 item_cotacao = {
                     "id": exame_selecionado["id"],
                     "nome": exame_selecionado["nome"],
                     "preco": exame_selecionado["preco"],
-                    "quantidade": quantidade_cotacao # Manter quantidade, pode ser para X testes para Y pessoas
+                    "quantidade": quantidade_cotacao
                 }
                 st.session_state.itens_cotacao.append(item_cotacao)
                 st.success(f"Item '{item_cotacao['nome']}' adicionado à cotação.")
             else:
-                st.warning("Exame selecionado não encontrado.") # Mensagem atualizada
+                st.warning("Exame selecionado não encontrado.")
         else:
-            st.warning("Por favor, selecione um exame para adicionar.") # Mensagem atualizada
+            st.warning("Por favor, selecione um exame para adicionar.")
 
     st.write("---")
     st.subheader("Itens na Cotação Atual:")
+
     total_cotacao = 0
     if st.session_state.itens_cotacao:
         for i, item in enumerate(st.session_state.itens_cotacao):
@@ -988,15 +988,19 @@ def pagina_cotacoes():
     else:
         st.info("Nenhum item adicionado à cotação ainda.")
 
-    if st.button("Gerar PDF e Salvar Cotação"): # Texto do botão atualizado
-        if not nome_empresa or not nuit_empresa or not endereco_empresa or not email_empresa:
+    # Botão para gerar PDF e salvar cotação
+    if st.button("Gerar PDF e Salvar Cotação"):
+        # Validação robusta dos campos da empresa
+        campos_obrigatorios = [nome_empresa, nuit_empresa, endereco_empresa, email_empresa]
+        if any(campo == "" for campo in campos_obrigatorios):
             st.warning("Preencha todas as informações da empresa.")
-            return # Adicionado return para parar a execução
-        elif not st.session_state.itens_cotacao:
+            return
+
+        if not st.session_state.itens_cotacao:
             st.warning("Adicione itens à cotação antes de gerar o PDF.")
-            return # Adicionado return para parar a execução
-        
-        # Obter o ID do utilizador autenticado (assumindo que 'user' está em st.session_state)
+            return
+
+        # Verifica se o utilizador está autenticado
         current_user_id = None
         if "user" in st.session_state and st.session_state["user"]:
             current_user_id = st.session_state["user"].id
@@ -1011,20 +1015,22 @@ def pagina_cotacoes():
             "endereco": endereco_empresa,
             "email": email_empresa
         }
-        
+
+        # Gerar PDF
         pdf_cotacao_bytes = gerar_pdf_cotacao_fpdf(empresa_dados, st.session_state.itens_cotacao)
-        
+
         if pdf_cotacao_bytes:
             nome_arquivo_cotacao_pdf = f"cotacao_{nome_empresa.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
-            
+
             try:
                 # Salvar o PDF no Supabase Storage
-                # Assumimos um bucket 'cotacoes_pdfs' que você precisará criar
                 supabase.storage.from_("cotacoes-pdfs").upload(
                     nome_arquivo_cotacao_pdf, pdf_cotacao_bytes, {"ContentType": "application/pdf"}
                 )
+
+                # Obter URL pública do PDF
                 public_url_pdf = supabase.storage.from_("cotacoes-pdfs").get_public_url(nome_arquivo_cotacao_pdf)
-                
+
                 # Salvar os detalhes da cotação na tabela 'cotacoes'
                 cotacao_data_db = {
                     "data_cotacao": datetime.now().isoformat(),
@@ -1032,25 +1038,26 @@ def pagina_cotacoes():
                     "nuit_empresa": nuit_empresa,
                     "endereco_empresa": endereco_empresa,
                     "email_empresa": email_empresa,
-                    "itens_cotacao": st.session_state.itens_cotacao, # JSONB
+                    "itens_cotacao": st.session_state.itens_cotacao,
                     "total_cotacao": total_cotacao,
-                    "pdf_url": public_url_pdf if public_url_pdf else None, # Salvar URL do PDF
-                    "user_id": current_user_id # Para RLS
+                    "pdf_url": public_url_pdf if public_url_pdf else None,
+                    "user_id": current_user_id
                 }
-                
+
                 response_db = supabase.table("cotacoes").insert(cotacao_data_db).execute()
-                
-                # Nao verificar status_code para APIResponse
+
                 st.success("PDF da cotação gerado e salvo no Supabase Storage e detalhes salvos na base de dados!")
-                
+
+                # Botão de download direto
                 st.download_button(
                     label="⬇️ Baixar Cotação PDF",
                     data=pdf_cotacao_bytes,
                     file_name=nome_arquivo_cotacao_pdf,
                     mime="application/pdf"
                 )
-                
-                st.session_state.itens_cotacao = [] # Limpar itens após salvar
+
+                # Limpar itens e resetar página
+                st.session_state.itens_cotacao = []
                 st.rerun()
 
             except Exception as e:
@@ -1058,12 +1065,14 @@ def pagina_cotacoes():
                 logging.error(f"Erro ao salvar cotação ou PDF: {e}")
         else:
             st.error("Erro ao gerar PDF da cotação.")
-    st.divider() # Linha divisória opcional para separar o conteúdo do rodapé
+
+    st.divider()
     st.markdown("""
     © 2025 Centro Médico Cuidados de Confiança | Todos os direitos reservados.  
     Versão: 1.0  
     Desenvolvedor: Salomão Paulino Machaieie
     """)
+
 
 def calcular_custo_produtos_vendidos(vendas_df, produtos_df):
     if vendas_df.empty or produtos_df.empty:
