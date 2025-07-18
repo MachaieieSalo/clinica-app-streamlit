@@ -313,64 +313,108 @@ def carregar_vendas():
 
 # Função gerar_pdf_cotacao (usando FPDF) - Esta foi a que você preferiu manter e ajustei o nome
 def gerar_pdf_cotacao_fpdf(empresa, itens): # Renomeei para evitar conflito com a de cima
-    pdf = FPDF()
-    pdf.add_page()
+"""
+    Gera um PDF de cotação em memória e retorna os bytes.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elementos = []
+
+    # Adicionar logo
     try:
-        # Tenta carregar de "logo.png" primeiro, se falhar, tenta de "images/logo.png"
         logo_path = "logo.png"
         try:
-            pdf.image(logo_path, x=10, y=8, w=33)
-        except RuntimeError: # FPDF levanta RuntimeError se o arquivo não for encontrado
+            imagem_logo = Image(logo_path, width=80, height=80)
+        except FileNotFoundError:
             logo_path = "images/logo.png"
-            pdf.image(logo_path, x=10, y=8, w=33)
-    except Exception as e:
-        logging.warning(f"Não foi possível carregar o logo para a cotação: {e}")
-        
-    pdf.set_font("Courier", size=10)
-    pdf.ln(30)
-    pdf.cell(200, 10, f"Cotação para: {empresa['nome']}", ln=True)
-    pdf.cell(200, 10, f"NUIT: {empresa['nuit']} - Endereço: {empresa['endereco']}", ln=True)
-    pdf.cell(200, 10, f"Email: {empresa['email']}", ln=True)
-    pdf.ln(10)
+            imagem_logo = Image(logo_path, width=80, height=80)
 
-    pdf.set_font("Courier", size=10)
-    pdf.cell(10, 10, "Nr", 1)
-    pdf.cell(70, 10, "Descrição", 1)
-    pdf.cell(20, 10, "Qtd", 1)
-    pdf.cell(30, 10, "Preço Un.", 1)
-    pdf.cell(30, 10, "Preço Total", 1)
-    pdf.cell(20, 10, "IVA", 1)
-    pdf.ln()
+        tabela_logo = Table([[imagem_logo]], colWidths=[100], rowHeights=[80])
+        tabela_logo.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("BOX", (0, 0), (-1, -1), 0, colors.white),
+        ]))
+        elementos.append(tabela_logo)
+
+    except Exception as e:
+        logging.warning(f"Logo não encontrado ou erro ao carregar: {e}")
+
+    # Estilos
+    estilos = getSampleStyleSheet()
+    estilo_normal = ParagraphStyle(
+        name="NormalPersonalizado", parent=estilos["Normal"],
+        fontName="Courier", fontSize=10, leading=12
+    )
+    estilo_bold = ParagraphStyle(
+        name="BoldPersonalizado", parent=estilos["Normal"],
+        fontName="Courier-Bold", fontSize=10, leading=12
+    )
+
+    # Dados da empresa
+    elementos.append(Spacer(1, 12))
+    elementos.append(Paragraph(f"<b>Cotação para:</b> {empresa['nome']}", estilo_bold))
+    elementos.append(Paragraph(f"NUIT: {empresa['nuit']} - Endereço: {empresa['endereco']}", estilo_normal))
+    elementos.append(Paragraph(f"Email: {empresa['email']}", estilo_normal))
+    elementos.append(Spacer(1, 12))
+
+    # Tabela dos itens
+    data = [["Nr", "Descrição", "Qtd", "Preço Unitário", "Preço Total", "IVA"]]
 
     total_sem_iva = 0
-    for i, item in enumerate(itens, 1):
-        preco_total_item = item['preco'] * item['quantidade']
-        total_sem_iva += preco_total_item
+    for idx, item in enumerate(itens, 1):
+        preco_total = item['quantidade'] * item['preco']
+        total_sem_iva += preco_total
 
-        pdf.cell(10, 10, str(i), 1)
-        pdf.cell(70, 10, item['nome'], 1)
-        pdf.cell(20, 10, str(item['quantidade']), 1)
-        pdf.cell(30, 10, f"MT {item['preco']:.2f}", 1)
-        pdf.cell(30, 10, f"MT {preco_total_item:.2f}", 1)
-        pdf.cell(20, 10, "16%", 1)
-        pdf.ln()
+        data.append([
+            str(idx),
+            item['nome'],
+            str(item['quantidade']),
+            f"MZN {item['preco']:.2f}",
+            f"MZN {preco_total:.2f}",
+            "16%"
+        ])
 
-    iva_total = total_sem_iva * 0.16
-    total_com_iva = total_sem_iva + iva_total
+    iva = total_sem_iva * 0.16
+    total_com_iva = total_sem_iva + iva
 
-    pdf.ln(5)
-    pdf.cell(200, 10, f"Subtotal (sem IVA): MZN {total_sem_iva:.2f}", ln=True)
-    pdf.cell(200, 10, f"IVA (16%): MZN {iva_total:.2f}", ln=True)
-    pdf.cell(200, 10, f"Total Geral: MZN {total_com_iva:.2f}", ln=True)
-    pdf.ln(10)
-    pdf.cell(200, 10, "Esta cotação tem a validade de 05 dias", ln=True)
-    pdf.ln(10)
-    pdf.set_font("Courier", "B", 10)
-    pdf.cell(200, 10, "DADOS BANCÁRIOS", ln=True)
-    pdf.cell(200, 10, "MPESA - Conta: 8481766589 - Pedro Mate", ln=True)
-    pdf.cell(200, 10, "EMOLA - Conta: 878166583 - Pedro Mate", ln=True)
+    tabela_itens = Table(data, colWidths=[30, 150, 50, 80, 80, 40])
+    tabela_itens.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, -1), "Courier"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+    ]))
+    elementos.append(tabela_itens)
+    elementos.append(Spacer(1, 12))
 
-    return pdf.output(dest='S').encode('latin1')
+    # Totais
+    elementos.append(Paragraph(f"Subtotal (sem IVA): MZN {total_sem_iva:.2f}", estilo_bold))
+    elementos.append(Paragraph(f"IVA (16%): MZN {iva:.2f}", estilo_bold))
+    elementos.append(Paragraph(f"Total Geral: MZN {total_com_iva:.2f}", estilo_bold))
+    elementos.append(Spacer(1, 12))
+
+    elementos.append(Paragraph("Esta cotação tem a validade de 05 dias.", estilo_normal))
+    elementos.append(Spacer(1, 12))
+
+    # Dados bancários
+    elementos.append(Paragraph("<b>DADOS BANCÁRIOS</b>", estilo_bold))
+    elementos.append(Paragraph("MPESA - Conta: 8481766589 - Pedro Mate", estilo_normal))
+    elementos.append(Paragraph("EMOLA - Conta: 878166583 - Pedro Mate", estilo_normal))
+
+    # Gerar PDF
+    try:
+        doc.build(elementos)
+        buffer.seek(0)
+        return buffer.getvalue()  # Retorna os bytes do PDF
+    except Exception as e:
+        logging.error(f"Erro ao construir PDF de cotação: {e}")
+        return None
 
 def gerar_pdf_paciente(paciente):
     pdf = FPDF()
