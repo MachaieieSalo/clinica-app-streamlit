@@ -222,9 +222,9 @@ def gerar_pdf(dados_cliente, carrinho, total): # Removi nome_arquivo como parâm
     )
 
     elements.append(Paragraph("<b>Factura de Medicamentos</b>", estilo_personalizado))
-    elements.append(Paragraph("Eduardo Mondlane 432, Maputo", estilo_personalizado))
-    elements.append(Paragraph("NUIT: 33417617", estilo_personalizado))
-    elements.append(Paragraph("Contacto: +258 84 123 4567", estilo_personalizado))
+    elements.append(Paragraph("Boane, B.2, Q.3 Av. Namaacha, Rua 1º de Maio C. Nº 59", estilo_personalizado))
+    elements.append(Paragraph("NUIT: 401937684", estilo_personalizado))
+    elements.append(Paragraph("Contacto: +258  84 671 1512 / 87 791 1717", estilo_personalizado))
     elements.append(Spacer(1, 12))
 
     elements.append(Paragraph(f"<b>Data de Emissão:</b> {dados_cliente['data_emissao']}", estilo_personalizado))
