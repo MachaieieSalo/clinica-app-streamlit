@@ -1049,16 +1049,18 @@ def pagina_cotacoes():
                 st.success("PDF da cotação gerado e salvo no Supabase Storage e detalhes salvos na base de dados!")
 
                 # Botão de download direto
+                st.success("Clique abaixo para fazer o download do PDF da cotação.")
+
                 st.download_button(
                     label="⬇️ Baixar Cotação PDF",
-                    data=pdf_cotacao_bytes,
+                    ydata=pdf_cotacao_bytes,
                     file_name=nome_arquivo_cotacao_pdf,
                     mime="application/pdf"
                 )
 
-                # Limpar itens e resetar página
-                st.session_state.itens_cotacao = []
-                st.rerun()
+            # NÃO limpar os itens nem fazer rerun agora
+            # Apenas se o utilizador quiser, ou após o download, noutro ciclo
+
 
             except Exception as e:
                 st.error(f"Erro ao salvar cotação ou PDF: {e}")
