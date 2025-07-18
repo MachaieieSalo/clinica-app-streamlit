@@ -126,16 +126,13 @@ def carregar_produtos():
 def carregar_exames():
     """Carrega a lista de exames clínicos do Supabase."""
     try:
-        # Assumimos que existe uma tabela 'exames' no seu Supabase
         response = supabase.table("exames").select("*").execute()
-        if response.data is not None:
-            return response.data
-        else:
-            return []
+        return response.data if response.data else []
     except Exception as e:
         logging.error(f"Erro ao carregar exames: {e}")
-        st.error("Erro ao carregar exames. Tente novamente.")
+        st.error("Erro ao carregar exames.")
         return []
+
 
 @st.cache_data(ttl=3600)
 def carregar_dados_contabilidade_vendas():
@@ -949,6 +946,12 @@ def pagina_cotacoes():
     # Carrega exames disponíveis uma vez
     if 'exames_carregados' not in st.session_state:
         st.session_state.exames_carregados = carregar_exames()
+        
+    # Botão para recarregar exames manualmente
+    if st.button("🔄 Recarregar Exames da Base de Dados"):
+        carregar_exames.clear()  # Limpa cache da função específica
+        st.session_state.exames_carregados = carregar_exames()
+        st.success("Exames recarregados com sucesso!")
 
     exames_disponiveis = st.session_state.exames_carregados
     exames_nomes = [e["nome"] for e in exames_disponiveis] if exames_disponiveis else []
