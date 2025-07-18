@@ -392,7 +392,7 @@ def gerar_pdf_cotacao_fpdf(empresa, itens):  # Renomeei para evitar conflito com
     tabela_itens.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.white),
         ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("ALIGN", (0, 0), (-1, -1), "JUSTIFY"),
         ("FONTNAME", (0, 0), (-1, -1), "Courier"),
         ("FONTSIZE", (0, 0), (-1, -1), 10),
     ]))
