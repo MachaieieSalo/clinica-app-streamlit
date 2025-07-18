@@ -1001,12 +1001,12 @@ def pagina_cotacoes():
 
         # Validação robusta dos campos da empresa
         campos_obrigatorios = [
-            st.session_state.nome_empresa.strip(),
-            st.session_state.nuit_empresa.strip(),
-            st.session_state.endereco_empresa.strip(),
-            st.session_state.email_empresa.strip()
+            nome_empresa,
+            nuit_empresa,
+            endereco_empresa,
+            email_empresa
         ]
-
+    
         if any(campo == "" for campo in campos_obrigatorios):
             st.warning("Preencha todas as informações da empresa.")
             return
